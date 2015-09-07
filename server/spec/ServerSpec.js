@@ -1,6 +1,12 @@
+// debugger;
 var handler = require('../request-handler');
 var expect = require('../../node_modules/chai/chai').expect;
+// var mocha = require("../../node_modules/mocha/mocha");
 var stubs = require('./Stubs');
+
+//Include test suits
+// var chaiModule = require("../../node_modules/chai/chai.js");
+// var mochaModule = require("../../node_modules/mocha/mocha.js");
 
 // Conditional async testing, akin to Jasmine's waitsFor()
 // Will wait for test to be truthy before executing callback
@@ -11,6 +17,7 @@ function waitForThen(test, cb) {
 }
 
 describe('Node Server Request Listener Function', function() {
+  debugger;
   it('Should answer GET requests for /classes/room with a 200 status code', function() {
     // This is a fake server request. Normally, the server would provide this,
     // but we want to test our function's behavior totally independent of the server code

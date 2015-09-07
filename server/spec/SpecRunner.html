@@ -1,0 +1,49 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Mocha Spec Runner</title>
+  <link rel="stylesheet" href="specStyles.css">
+  <!-- // <script src="lib/jquery.js"></script> -->
+  <script src="../../2015-08-chatterbox-client-solution/lib/jquery.js"></script>
+  <script src="../../node_modules/mocha/mocha.js"></script>
+  <script src="../../node_modules/chai/chai.js"></script>
+  <!-- // <script src="lib/sinon/sinon.js"></script> -->
+  <script>
+    mocha.setup('bdd');
+    var expect = chai.expect;
+    $(function() {
+      window.mochaPhantomJS ? mochaPhantomJS.run() : mocha.run();
+    });
+  </script>
+
+
+  <!-- Source files -->
+  <!-- // <script src="client/scripts/app.js"></script> -->
+  <script src="../basic-server.js"></script>
+  <script src="../request-handler.js"></script>
+  <!-- Spec files -->
+  <script src="ServerSpec.js"></script>
+
+</head>
+<body>
+<div id="mocha"></div>
+<div id="testarea" style="display: none;">
+
+  <div id="main">
+    <h1>chatterbox</h1>
+    <!-- <div class="spinner"><img src="client/images/spiffygif_46x46.gif"></div> -->
+    <div id="rooms">
+      Room:
+      <select id="roomSelect">
+      </select>
+    </div>
+    <form action="#" id="send" method="post">
+      <input type="text" name="message" id="message"/>
+      <input type="submit" name="submit" class="submit"/>
+    </form>
+    <div id="chats"></div>
+  </div>
+
+</div>
+</body>
+</html>
