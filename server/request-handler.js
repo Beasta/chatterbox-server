@@ -1,4 +1,4 @@
-/*************************************************************
+  /*************************************************************
 
 You should implement your request handler function in this file.
 
@@ -11,6 +11,8 @@ this file and include it in basic-server.js so that it actually works.
 *Hint* Check out the node module documentation at http://nodejs.org/api/modules.html.
 
 **************************************************************/
+
+var fileSystem = require('fs');
 
 var requestHandler = function(request, response) {
   // Request and Response come from node's http module.
@@ -39,12 +41,16 @@ var requestHandler = function(request, response) {
   //
   // You will need to change this if you are sending something
   // other than plain text, like JSON or HTML.
-  headers['Content-Type'] = "text/plain";
+  headers['Content-Type'] = "application/json";
 
+  //Set data
+  // headers["data"] = "{}";
+  // headers["body"] = "{}";
+  
   // .writeHead() writes to the request line and headers of the response,
   // which includes the status and all headers.
   response.writeHead(statusCode, headers);
-
+  // console.log(response["data"]);
   // Make sure to always call response.end() - Node may not send
   // anything back to the client until you do. The string you pass to
   // response.end() will be the body of the response - i.e. what shows
@@ -52,7 +58,8 @@ var requestHandler = function(request, response) {
   //
   // Calling .end "flushes" the response's internal buffer, forcing
   // node to actually send all the data over to the client.
-  response.end("Hello, World!");
+
+  response.end('{"results":[]}');
 };
 
 // These headers will allow Cross-Origin Resource Sharing (CORS).
@@ -71,3 +78,37 @@ var defaultCorsHeaders = {
   "access-control-max-age": 10 // Seconds.
 };
 
+//Populating results
+//io mode: 1 == reading, 2 == writing, 8 == appending
+//filesystemobject.OpentextFile(filename, iomode, create, format)
+var dbReadWrite = function(iomode, data){
+  if(iomode === 'POST'){
+    if(data === undefined){
+      return console.log("No data to write.");
+    }
+    //Push data to currDB
+    currDB.push(data);
+    //Write new data to file in its entirety
+    fileSystem.writeFileSync("database.txt", JSON.stringify({"results": currDB}));
+  }
+  else if(iomode === 'GET'){
+    var readData = JSON.parse(fileSystem.readFileSync("database.txt"));
+    return readData;
+  }
+  else{
+    console.log('no post no get');
+  }
+  console.log("called for iomode = " + iomode);
+};
+
+//Read data into current db
+var currDB = dbReadWrite("GET").results;
+
+var tmpData = {"id": 1, "name": "1name"};/*, {"id": 1, "name": "1name"}, {"id": 2, "name": "2name"}];*/
+dbReadWrite("POST", tmpData);
+dbReadWrite("POST", tmpData);
+var readData = dbReadWrite("GET");
+console.log(readData);
+
+//Setting request handler for export
+module.exports.requestHandler = requestHandler;
