@@ -13,6 +13,55 @@ this file and include it in basic-server.js so that it actually works.
 **************************************************************/
 
 var fileSystem = require('fs');
+var rq2 = function(request, response){
+
+  var statusCode = 200;
+  var findings;
+  var reqData = "";
+  //Listen for data
+  request.on("data", function(chunk){
+    reqData += chunk;
+  });
+  //Listen for end
+  request.on("end", function(){
+    console.log(request.method);
+    console.log("Data: " + reqData);
+    //If we have data
+    if(reqData){
+      var dbData = JSON.parse(reqData);
+      //If post
+      if(request.method === "POST"){
+        findings = dbReadWrite("POST", dbData/*, options*/);
+        statusCode = 201;//Successful post
+      }
+      //Else if get
+      else if(request.method === "GET"){
+        findings = dbReadWrite("GET"/*, null, options*/);
+        statusCode = 200;//Successful get
+      }
+    }
+    // See the note below about CORS headers.
+    var headers = defaultCorsHeaders;
+    // Tell the client we are sending them plain text.
+    //
+    // You will need to change this if you are sending something
+    // other than plain text, like JSON or HTML.
+    headers['Content-Type'] = "application/json";
+   // .writeHead() writes to the request line and headers of the response,
+    // which includes the status and all headers.
+    response.writeHead(statusCode, headers);
+    //If findings wasn't defined, set the end
+    if(findings === undefined || (findings.results !== undefined && findings.results.length ===0)){
+      response.end('{"results": []}');
+    }
+    //Otherwise, set to JSON.stringify on findings
+    else{
+      // console.log(JSON.stringify(findings.results[0].username));
+      console.log(JSON.stringify(findings));
+      response.end(JSON.stringify(findings));
+    }
+  });
+};
 
 var requestHandler = function(request, response) {
   // Request and Response come from node's http module.
@@ -30,9 +79,30 @@ var requestHandler = function(request, response) {
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
   console.log("Serving request type " + request.method + " for url " + request.url);
-
+  var statusCode;
+  var findings;
+  var options;
+  //If trying post
+  if(request.method === "POST"){
+    console.log(request.body);
+    //console.log(request.json === undefined);
+    var x = [];
+    for(var k in request){
+      x.push(k);
+    }
+    console.log(x.join(", "));
+    console.log(request.readable);/*
+    findings = dbReadWrite("POST", request.json/*, options*///);
+    //Assign status code for post
+    statusCode = 201;
+  }
+  //If trying to get
+  else if(request.method === "GET"){
+    findings = dbReadWrite("GET"/*, null, options*/);
+    statusCode = 200;
+  }
   // The outgoing status.
-  var statusCode = 200;
+  // var statusCode = 200;
 
   // See the note below about CORS headers.
   var headers = defaultCorsHeaders;
@@ -59,7 +129,7 @@ var requestHandler = function(request, response) {
   // Calling .end "flushes" the response's internal buffer, forcing
   // node to actually send all the data over to the client.
 
-  response.end('{"results":[]}');
+  response.end(JSON.stringify(findings));
 };
 
 // These headers will allow Cross-Origin Resource Sharing (CORS).
@@ -82,33 +152,39 @@ var defaultCorsHeaders = {
 //io mode: 1 == reading, 2 == writing, 8 == appending
 //filesystemobject.OpentextFile(filename, iomode, create, format)
 var dbReadWrite = function(iomode, data){
+  var obj = {results: []};
+
   if(iomode === 'POST'){
+    var currDB = dbReadWrite("GET").results;
     if(data === undefined){
-      return console.log("No data to write.");
+      console.log("No data to write.");
     }
     //Push data to currDB
     currDB.push(data);
+    //Push database into obj
+    obj.results = currDB;
     //Write new data to file in its entirety
     fileSystem.writeFileSync("database.txt", JSON.stringify({"results": currDB}));
   }
   else if(iomode === 'GET'){
     var readData = JSON.parse(fileSystem.readFileSync("database.txt"));
-    return readData;
+    obj = readData;
   }
   else{
     console.log('no post no get');
   }
-  console.log("called for iomode = " + iomode);
+  return obj;
 };
 
 //Read data into current db
-var currDB = dbReadWrite("GET").results;
+//var currDB = dbReadWrite("GET").results;
 
-var tmpData = {"id": 1, "name": "1name"};/*, {"id": 1, "name": "1name"}, {"id": 2, "name": "2name"}];*/
-dbReadWrite("POST", tmpData);
-dbReadWrite("POST", tmpData);
-var readData = dbReadWrite("GET");
-console.log(readData);
+// var tmpData = {"id": 1, "name": "1name"};, {"id": 1, "name": "1name"}, {"id": 2, "name": "2name"}];
+// dbReadWrite("POST", tmpData);
+// dbReadWrite("POST", tmpData);
+// var readData = dbReadWrite("GET");
+// console.log(readData);
 
 //Setting request handler for export
 module.exports.requestHandler = requestHandler;
+module.exports.rq2 = rq2;
