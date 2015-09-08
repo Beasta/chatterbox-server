@@ -13,7 +13,7 @@ this file and include it in basic-server.js so that it actually works.
 **************************************************************/
 
 var fileSystem = require('fs');
-var rq2 = function(request, response){
+var requestHandler = function(request, response){
 
   var statusCode = 200;
   var findings;
@@ -36,7 +36,7 @@ var rq2 = function(request, response){
       }
       //Else if get
       else if(request.method === "GET"){
-        findings = dbReadWrite("GET"/*, null, options*/);
+        findings = dbReadWrite("GET", dbData/*, options*/);
         statusCode = 200;//Successful get
       }
     }
@@ -51,86 +51,85 @@ var rq2 = function(request, response){
     // which includes the status and all headers.
     response.writeHead(statusCode, headers);
     //If findings wasn't defined, set the end
-    if(findings === undefined || (findings.results !== undefined && findings.results.length ===0)){
+    if(findings === undefined || (findings.results !== undefined && findings.results.length === 0)){
       response.end('{"results": []}');
     }
     //Otherwise, set to JSON.stringify on findings
     else{
-      // console.log(JSON.stringify(findings.results[0].username));
-      console.log(JSON.stringify(findings));
+      console.log(JSON.stringify(findings.results));
       response.end(JSON.stringify(findings));
     }
   });
 };
 
-var requestHandler = function(request, response) {
-  // Request and Response come from node's http module.
-  //
-  // They include information about both the incoming request, such as
-  // headers and URL, and about the outgoing response, such as its status
-  // and content.
-  //
-  // Documentation for both request and response can be found in the HTTP section at
-  // http://nodejs.org/documentation/api/
+// var requestHandler = function(request, response) {
+//   // Request and Response come from node's http module.
+//   //
+//   // They include information about both the incoming request, such as
+//   // headers and URL, and about the outgoing response, such as its status
+//   // and content.
+//   //
+//   // Documentation for both request and response can be found in the HTTP section at
+//   // http://nodejs.org/documentation/api/
 
-  // Do some basic logging.
-  //
-  // Adding more logging to your server can be an easy way to get passive
-  // debugging help, but you should always be careful about leaving stray
-  // console.logs in your code.
-  console.log("Serving request type " + request.method + " for url " + request.url);
-  var statusCode;
-  var findings;
-  var options;
-  //If trying post
-  if(request.method === "POST"){
-    console.log(request.body);
-    //console.log(request.json === undefined);
-    var x = [];
-    for(var k in request){
-      x.push(k);
-    }
-    console.log(x.join(", "));
-    console.log(request.readable);/*
-    findings = dbReadWrite("POST", request.json/*, options*///);
-    //Assign status code for post
-    statusCode = 201;
-  }
-  //If trying to get
-  else if(request.method === "GET"){
-    findings = dbReadWrite("GET"/*, null, options*/);
-    statusCode = 200;
-  }
-  // The outgoing status.
-  // var statusCode = 200;
+//   // Do some basic logging.
+//   //
+//   // Adding more logging to your server can be an easy way to get passive
+//   // debugging help, but you should always be careful about leaving stray
+//   // console.logs in your code.
+//   console.log("Serving request type " + request.method + " for url " + request.url);
+//   var statusCode;
+//   var findings;
+//   var options;
+//   //If trying post
+//   if(request.method === "POST"){
+//     console.log(request.body);
+//     //console.log(request.json === undefined);
+//     var x = [];
+//     for(var k in request){
+//       x.push(k);
+//     }
+//     console.log(x.join(", "));
+//     console.log(request.readable);/*
+//     findings = dbReadWrite("POST", request.json/*, options*///);
+//     //Assign status code for post
+//     statusCode = 201;
+//   }
+//   //If trying to get
+//   else if(request.method === "GET"){
+//     findings = dbReadWrite("GET"/*, null, options*/);
+//     statusCode = 200;
+//   }
+//   // The outgoing status.
+//   // var statusCode = 200;
 
-  // See the note below about CORS headers.
-  var headers = defaultCorsHeaders;
+//   // See the note below about CORS headers.
+//   var headers = defaultCorsHeaders;
 
-  // Tell the client we are sending them plain text.
-  //
-  // You will need to change this if you are sending something
-  // other than plain text, like JSON or HTML.
-  headers['Content-Type'] = "application/json";
+//   // Tell the client we are sending them plain text.
+//   //
+//   // You will need to change this if you are sending something
+//   // other than plain text, like JSON or HTML.
+//   headers['Content-Type'] = "application/json";
 
-  //Set data
-  // headers["data"] = "{}";
-  // headers["body"] = "{}";
+//   //Set data
+//   // headers["data"] = "{}";
+//   // headers["body"] = "{}";
   
-  // .writeHead() writes to the request line and headers of the response,
-  // which includes the status and all headers.
-  response.writeHead(statusCode, headers);
-  // console.log(response["data"]);
-  // Make sure to always call response.end() - Node may not send
-  // anything back to the client until you do. The string you pass to
-  // response.end() will be the body of the response - i.e. what shows
-  // up in the browser.
-  //
-  // Calling .end "flushes" the response's internal buffer, forcing
-  // node to actually send all the data over to the client.
+//   // .writeHead() writes to the request line and headers of the response,
+//   // which includes the status and all headers.
+//   response.writeHead(statusCode, headers);
+//   // console.log(response["data"]);
+//   // Make sure to always call response.end() - Node may not send
+//   // anything back to the client until you do. The string you pass to
+//   // response.end() will be the body of the response - i.e. what shows
+//   // up in the browser.
+//   //
+//   // Calling .end "flushes" the response's internal buffer, forcing
+//   // node to actually send all the data over to the client.
 
-  response.end(JSON.stringify(findings));
-};
+//   response.end(JSON.stringify(findings));
+// };
 
 // These headers will allow Cross-Origin Resource Sharing (CORS).
 // This code allows this server to talk to websites that
@@ -169,10 +168,14 @@ var dbReadWrite = function(iomode, data){
   else if(iomode === 'GET'){
     var readData = JSON.parse(fileSystem.readFileSync("database.txt"));
     obj = readData;
+    // console.log("Get Request");
+    // console.log(obj);
   }
   else{
     console.log('no post no get');
   }
+  console.log("io method:" + iomode);
+  console.log(obj);
   return obj;
 };
 
@@ -187,4 +190,3 @@ var dbReadWrite = function(iomode, data){
 
 //Setting request handler for export
 module.exports.requestHandler = requestHandler;
-module.exports.rq2 = rq2;
