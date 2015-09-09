@@ -1,17 +1,3 @@
-/*************************************************************
-
-You should implement your request handler function in this file.
-
-requestHandler is already getting passed to http.createServer()
-in basic-server.js, but it won't work as is.
-
-You'll have to figure out a way to export this function from
-this file and include it in basic-server.js so that it actually works.
-
-*Hint* Check out the node module documentation at http://nodejs.org/api/modules.html.
-
-**************************************************************/
-
 module.exports = function(request, response) {
 
 
@@ -28,27 +14,49 @@ module.exports = function(request, response) {
   }
 
   if(actions[request.method]){
-    actions[request.method](statusCode,response);
+    actions[request.method](response,request);
   }
 
 };
 
+var collectData = function(request,cb){
+  var curData = "";
+  request.on('data',function(chunk){
+    curData += chunk;
+  });
+  request.on('end',function () {
+    var msg=JSON.parse(curData);
+    cb(msg);
+  });
+}
+
 var actions = {
-  "GET":function(statusCode,response){
-    sendResponse(statusCode,response);
+  "GET":function(response,request){
+    
+    sendResponse(response, {'results':db});
+
   },
-  "POST":function(statusCode,response){
-    sendResponse(statusCode,response);
+  "POST":function(response,request){
+
+    collectData(request,function(message){
+      message.objectID = db.length;
+      db.push(message);
+      console.log(db);
+      sendResponse(response, message, 201);
+    });
+
   },
-  "OPTIONS":function(statusCode,response){
-    sendResponse(statusCode,response);
+  "OPTIONS":function(response,request){
+    
+    sendResponse(response, null);
   },
 
 }
-
-var sendResponse = function(statusCode,response){
+ 
+var sendResponse = function(response, data, statusCode){
+    statusCode = statusCode || 200;
     response.writeHead(statusCode, defaultCorsHeaders);
-    response.end(JSON.stringify(db));
+    response.end(JSON.stringify(data));
 }
 
 //Database of messages
@@ -56,7 +64,7 @@ var db=[{'username':'bob','text':'this is fun','objectID':0}];
 
 //Default headers
 var defaultCorsHeaders = {
-  "Content-Type":"text/plain",
+  "Content-Type":"application/json",
   "access-control-allow-origin": "*",
   "access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS",
   "access-control-allow-headers": "content-type, accept",
